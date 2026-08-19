@@ -1,0 +1,12 @@
+# Users who can use /close <reason>
+closers:
+  - alice
+
+# Users who can use /strike [@user]
+strikers:
+  - alice
+  - bob
+
+# Users who can use /ban @user [reason]
+moderators:
+  - alice

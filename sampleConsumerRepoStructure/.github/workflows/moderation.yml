@@ -1,0 +1,23 @@
+name: Moderate Discussions
+
+on:
+  discussion:
+    types: [created]
+  discussion_comment:
+    types: [created]
+
+permissions:
+  discussions: write   # close discussions, post comments
+  contents: write      # write back to banned.yml / strikes.yml
+
+jobs:
+  moderate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: you/discussion-moderator@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # optional — only needed if you move the files elsewhere
+          # config_path:  .github/moderation/config.yml
+          # banned_path:  .github/moderation/banned.yml
+          # strikes_path: .github/moderation/strikes.yml

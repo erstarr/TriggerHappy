@@ -1,0 +1,45 @@
+name: Discussion Moderator
+description: >
+  Moderates GitHub Discussions. Auto-closes discussions opened by banned users.
+  Supports /close, /strike, and /ban commands for authorised users.
+
+inputs:
+  github_token:
+    description: GitHub token with discussions:write and contents:write
+    required: true
+  config_path:
+    description: Path to config.yml (role lists) in the consumer repo
+    required: false
+    default: .github/moderation/config.yml
+  banned_path:
+    description: Path to banned.yml in the consumer repo
+    required: false
+    default: .github/moderation/banned.yml
+  strikes_path:
+    description: Path to strikes.yml in the consumer repo
+    required: false
+    default: .github/moderation/strikes.yml
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      shell: bash
+      run: pip install -r "${{ github.action_path }}/requirements.txt"
+
+    - name: Run moderation
+      shell: bash
+      run: python "${{ github.action_path }}/src/moderate.py"
+      env:
+        GITHUB_TOKEN:       ${{ inputs.github_token }}
+        DISCUSSION_NODE_ID: ${{ github.event.discussion.node_id }}
+        DISCUSSION_AUTHOR:  ${{ github.event.discussion.user.login }}
+        COMMENT_BODY:       ${{ github.event.comment.body }}
+        CONFIG_PATH:        ${{ inputs.config_path }}
+        BANNED_PATH:        ${{ inputs.banned_path }}
+        STRIKES_PATH:       ${{ inputs.strikes_path }}
+        # GITHUB_REPOSITORY, GITHUB_ACTOR, GITHUB_EVENT_NAME are set automatically
