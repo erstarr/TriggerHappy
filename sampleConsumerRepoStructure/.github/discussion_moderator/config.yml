@@ -1,12 +1,14 @@
 # Users who can use /close <reason>
 closers:
-  - alice
+  # - bob is implicit since bob is a moderator
+  - ellie
+  - allison
 
 # Users who can use /strike [@user]
 strikers:
+  # - bob is implicit since bob is a moderator
   - alice
-  - bob
 
-# Users who can use /ban @user [reason]
+# Users who can use /ban @user <reason> as well as do perform any other command
 moderators:
-  - alice
+  - bob
