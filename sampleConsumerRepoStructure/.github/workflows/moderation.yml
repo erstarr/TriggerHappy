@@ -9,15 +9,19 @@ on:
 permissions:
   discussions: write   # close discussions, post comments
   contents: write      # write back to banned.yml / strikes.yml
+  actions: write
 
 jobs:
   moderate:
     runs-on: ubuntu-latest
     steps:
-      - uses: you/discussion-moderator@v1
+      - uses: erstarr/triggerhappy@main # TODO remember to bumb when publishing first stable ver
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # optional — only needed if you move the files elsewhere
-          # config_path:  .github/moderation/config.yml
-          # banned_path:  .github/moderation/banned.yml
-          # strikes_path: .github/moderation/strikes.yml
+          # optional - only needed if you move the files elsewhere
+          # config_path:  .github/discussion_moderator/config.yml
+          # banned_path:  .github/discussion_moderator/banned.yml
+          # strikes_path:    .github/discussion_moderator/strikes.yml
+
+          # If you want to enable strikes, specify the number of strikes a user can receive before they are banned
+          # strikes_to_ban:  3

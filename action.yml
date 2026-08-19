@@ -1,4 +1,4 @@
-name: Discussion Moderator
+name: triggerHappy - Discussion Moderation Tool # TODO find a better name
 description: >
   Moderates GitHub Discussions. Auto-closes discussions opened by banned users.
   Supports /close, /strike, and /ban commands for authorised users.
@@ -10,15 +10,18 @@ inputs:
   config_path:
     description: Path to config.yml (role lists) in the consumer repo
     required: false
-    default: .github/moderation/config.yml
+    default: .github/discussion_moderator/config.yml
   banned_path:
     description: Path to banned.yml in the consumer repo
     required: false
-    default: .github/moderation/banned.yml
+    default: .github/discussion_moderator/banned.yml
   strikes_path:
-    description: Path to strikes.yml in the consumer repo
+    description: Path to strikes.yml in the consumer repo. Optional
     required: false
-    default: .github/moderation/strikes.yml
+    default: .github/discussion_moderator/strikes.yml
+  strikes_to_ban:
+    description: Number of strikes a user can receive before being auto-banned. Mandatory if strikes_path is provided, no-op otherwise.
+    required: false
 
 runs:
   using: composite
@@ -26,6 +29,11 @@ runs:
     - uses: actions/setup-python@v5
       with:
         python-version: "3.12"
+
+    - uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: pip-requests-2.32.3-pyyaml-6.0.2
 
     - name: Install dependencies
       shell: bash
@@ -42,4 +50,5 @@ runs:
         CONFIG_PATH:        ${{ inputs.config_path }}
         BANNED_PATH:        ${{ inputs.banned_path }}
         STRIKES_PATH:       ${{ inputs.strikes_path }}
+        STRIKES_TO_BAN:     ${{ inputs.strikes_to_ban }}
         # GITHUB_REPOSITORY, GITHUB_ACTOR, GITHUB_EVENT_NAME are set automatically

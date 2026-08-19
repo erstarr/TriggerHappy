@@ -1,8 +1,8 @@
 # Populated automatically. Do not edit by hand unless you know what you're doing.
-# TODO REMOVE
+# TODO REMOVE after debug
 # Structure:
 #
 # username:
 #   reason: Why they were banned
-#   banned_by: who issued the ban (or __system__ for auto-bans(??))
+#   banned_by: who issued the ban (or __system__ for auto-bans)
 #   timestamp: 2026-08-19T10:30:00+00:00
