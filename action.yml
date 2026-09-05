@@ -27,7 +27,7 @@ inputs:
   strike_per_nonFormat:
     description: Should discussion authors who didn't obey the format also receive a strike.
     required: false
-    default: false 
+    default: False 
 
 runs:
   using: composite
