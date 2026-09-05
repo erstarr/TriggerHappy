@@ -57,7 +57,7 @@ See [Example Consumer Repo Structure](sampleConsumerRepoStructure) for a setup w
 
 ## Install
 
-See [Example Workflow](sampleConsumerRepoStructure/.github/workflows/moderation.yml) for how to integrate triggerHappy to your repo.
+See [Example Workflow](sampleConsumerRepoStructure/.github/workflows/discussion_moderation.yml) for how to integrate triggerHappy to your repo.
 
 Follow the instructions there to enable optional features.
 
