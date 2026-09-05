@@ -1,9 +1,9 @@
 
-# triggerHappy - Discussion Moderation Tool
+# TriggerHappy - Discussion Moderation Tool
 
 ## Features
 
-triggerHappy is a moderation tool for GitHub discussions.
+TriggerHappy is a moderation tool for GitHub discussions.
 
 Give select users the ability to close discussions, give strikes to users, and ban users from opening any other discussions outright (and also the ability to unban them).
 
@@ -22,7 +22,10 @@ Give select users the ability to close discussions, give strikes to users, and b
 - Strikes: You can choose to enable strikes.
     - Auto-Banning when a user has reached the number of allowed strikes. This number is configurable.
 - Format Enforcemen: Can auto-close discussions that do not match the provided format regex.
+    - Limit enforcement to certain discussion categories (use category names!)
     - Auto-Strike: Can choose to give users strikes for their non-format-complicant discussion.
+- Moderate multiple repos / Split storage repo to avoid commit spam in main repo
+    - Allows you to keep the same list of privilaged and offending users across multiple repos. This can also be used to separate which repo stores the list of these users to avoid spamming your main repo(s) with moderation commits.
 
 
 ### Commands
@@ -57,10 +60,19 @@ See [Example Consumer Repo Structure](sampleConsumerRepoStructure) for a setup w
 
 ## Install
 
-See [Example Workflow](sampleConsumerRepoStructure/.github/workflows/discussion_moderation.yml) for how to integrate triggerHappy to your repo.
+### Single Repo
+
+See [Example Workflow](sampleConsumerRepoStructure/.github/workflows/discussion_moderation.yml) for how to integrate TriggerHappy to your repo.
 
 Follow the instructions there to enable optional features.
 
+### Multiple Repos
+
+You need to set up "Fine-grained PAT" for the consumer repo to be able to act on the storage repo. Use `CROSS_REPO_TOKEN` to store the storage repo token.
+
+See sampleConsumerRepoStructure/.github/workflows/discussion_moderation.yml for setting up Consumer Repo(s)
+
+The paths paths across all consumer repos MUST BE SYNCED!
 
 # To-Do
 

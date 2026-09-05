@@ -1,4 +1,4 @@
-name: triggerHappy - Discussion Moderation Tool
+name: TriggerHappy - Discussion Moderation Tool
 
 on:
   discussion:
@@ -14,18 +14,19 @@ jobs:
   moderate:
     runs-on: ubuntu-latest
     steps:
-      - uses: erstarr/triggerhappy@main # TODO: remember to bump when publishing first stable ver
+      - uses: erstarr/TriggerHappy@main # TODO: remember to bump when publishing first stable ver
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-
+          storage_token: ${{ secrets.CROSS_REPO_TOKEN || secrets.GITHUB_TOKEN }}
           # optional - only needed if you move the files elsewhere
+          storage_repo: your_org/yourRepo
           config_path:  .github/discussion_moderator/config.yml
           banned_path:  .github/discussion_moderator/banned.yml
-          strikes_path:    .github/discussion_moderator/strikes.yml
-          # optional feature - If you want to enable strikes, specify the number of strikes a user can receive before they are banned
+          strikes_path: .github/discussion_moderator/strikes.yml
           strikes_to_ban:  3
           # optional feature - If you want to enable auto format-enforcement, provide a regex to match against
           auto_close_regex: ".*"
+          auto_close_categories: "General, Bugs, Feature Requests"
           # optional feature - Shall discussion authors that didn't obey the format receive strikes for it -- uses the strikes_to_ban quota like normal strikes
           strike_per_nonFormat: True
 

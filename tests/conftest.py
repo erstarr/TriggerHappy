@@ -1,5 +1,5 @@
 """
-Shared fixtures for the triggerhappy test suite.
+Shared fixtures for the TriggerHappy test suite.
 
 IMPORTANT — read this before writing more tests against moderate.py:
 
@@ -41,7 +41,7 @@ if str(SRC_DIR) not in sys.path:
 # Env vars moderate.py reads via os.environ[...] — must always be present.
 REQUIRED_ENV = {
     "GITHUB_TOKEN": "test-token",
-    "GITHUB_REPOSITORY": "erstarr/triggerhappy",
+    "GITHUB_REPOSITORY": "erstarr/TriggerHappy",
     "GITHUB_ACTOR": "alice",
     "GITHUB_EVENT_NAME": "discussion",
     "DISCUSSION_NODE_ID": "D_test123",

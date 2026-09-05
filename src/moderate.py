@@ -28,19 +28,35 @@ CLOSE_REASON_MAP = {
     "duplicate": "DUPLICATE",
 }
 
+
+# Commit Identity - this will show up as in moderation git commits
+
+COMMIT_IDENTITY: dict[str, str] = {"name": "github-actions[bot]",
+                                   "email": "41898282+github-actions[bot]@users.noreply.github.com"}
+
 # ─── Environment ──────────────────────────────────────────────────────────────
 # GITHUB_REPOSITORY, GITHUB_ACTOR, GITHUB_EVENT_NAME are set automatically
 # by the runner. Everything else is passed explicitly from action.yml.
 
-TOKEN: str = os.environ["GITHUB_TOKEN"]
+# Discussion interactions will use this
+GITHUB_TOKEN: str = os.environ["GITHUB_TOKEN"]
+DISCUSSION_HEADERS: dict[str, str] = {
+    "Authorization": f"Bearer {GITHUB_TOKEN}"}
+# Storage repo interactions will use this
+STORAGE_TOKEN: str = os.environ["STORAGE_TOKEN"]
+STORAGE_HEADERS: dict[str, str] = {"Authorization": f"Bearer {STORAGE_TOKEN}"}
+
+
 REPO: str = os.environ["GITHUB_REPOSITORY"]
+STORAGE_REPO: str = os.environ.get("STORAGE_REPO", "").strip() or REPO
 ACTOR: str = os.environ["GITHUB_ACTOR"]
 EVENT: str = os.environ["GITHUB_EVENT_NAME"]
 
 DISCUSSION_NODE_ID: str = os.environ["DISCUSSION_NODE_ID"]
 DISCUSSION_AUTHOR: str = os.environ["DISCUSSION_AUTHOR"]
 
-DISCUSSION_BODY: str = os.environ.get(key="DISCUSSION_BODY", default="").strip()
+DISCUSSION_BODY: str = os.environ.get(
+    key="DISCUSSION_BODY", default="").strip()
 COMMENT_BODY: str = os.environ.get(key="COMMENT_BODY", default="").strip()
 
 
@@ -48,8 +64,6 @@ CONFIG_PATH = os.environ.get(
     key="CONFIG_PATH",  default=".github/discussion_moderator/config.yml")
 BANNED_PATH = os.environ.get(
     key="BANNED_PATH",  default=".github/discussion_moderator/banned.yml")
-
-HEADERS: dict[str, str] = {"Authorization": f"Bearer {TOKEN}"}
 
 # ─── Optional Features ────────────────────────────────────────────────────────
 
@@ -71,6 +85,10 @@ FORMAT_REGEX: str = os.environ.get("AUTO_CLOSE_REGEX", "").strip()
 
 FORMAT_ENFORCEMENT_ENABLED: bool = bool(FORMAT_REGEX)
 
+DISCUSSION_CATEGORY: str = os.environ.get("DISCUSSION_CATEGORY", "")
+AUTO_CLOSE_CATEGORIES: set[str] = {c.strip() for c in os.environ.get(
+    "AUTO_CLOSE_CATEGORIES", "").split(",") if c.strip()}
+
 FORMAT_ENFORCEMENT_STRIKES_ENABLED: bool = True if os.environ.get(
     "STRIKE_PER_NONFORMAT", "").strip().lower() == "true" else False
 
@@ -85,8 +103,8 @@ def read_yaml_file(path: str, firstWriteWillCreate: bool = True) -> tuple[dict[A
     firstWriteWillCreate = True -> sha is None when the file doesn't exist yet (first write will create it).
     """
     resp: requests.Response = requests.get(
-        url=f"https://api.github.com/repos/{REPO}/contents/{path}",
-        headers=HEADERS,
+        url=f"https://api.github.com/repos/{STORAGE_REPO}/contents/{path}",
+        headers=STORAGE_HEADERS,
     )
     if firstWriteWillCreate and resp.status_code == 404:
         return {}, None
@@ -98,24 +116,27 @@ def read_yaml_file(path: str, firstWriteWillCreate: bool = True) -> tuple[dict[A
         base64.b64decode(data["content"])) or {})
     return parsed, data["sha"]
 
+
 def write_yaml_file(path: str, content: dict[str, Any], sha: str | None, commit_msg: str) -> str:
     """
     Returns str: sha.
     """
 
-    body: dict[str, str] = {
+    body: dict[str, Any] = {
         "message": commit_msg,
         "content": base64.b64encode(
             yaml.dump(content, default_flow_style=False,
                       allow_unicode=True).encode()
         ).decode(),
+        "author": COMMIT_IDENTITY,
+        "committer": COMMIT_IDENTITY,
     }
     if sha:
         body["sha"] = sha
 
     resp = requests.put(
-        f"https://api.github.com/repos/{REPO}/contents/{path}",
-        headers={**HEADERS, "Content-Type": "application/json"},
+        f"https://api.github.com/repos/{STORAGE_REPO}/contents/{path}",
+        headers={**STORAGE_HEADERS, "Content-Type": "application/json"},
         json=body,
     )
     resp.raise_for_status()
@@ -123,10 +144,6 @@ def write_yaml_file(path: str, content: dict[str, Any], sha: str | None, commit_
 
 
 # ─── GraphQL ──────────────────────────────────────────────────────────────────
-
-
-
-
 
 
 # --- State queries --------------------------------
@@ -151,7 +168,7 @@ def discussion_closed(node_id: str) -> bool:
 def graphql(query: str, variables: dict[str, Any]) -> Any:
     resp = requests.post(
         "https://api.github.com/graphql",
-        headers={**HEADERS, "Content-Type": "application/json"},
+        headers={**DISCUSSION_HEADERS, "Content-Type": "application/json"},
         json={"query": query, "variables": variables},
     )
     resp.raise_for_status()
@@ -166,7 +183,7 @@ def close_discussion(node_id: str, reason: str) -> None:
 
     if discussion_closed(node_id):
         return
-    
+
     graphql(
         """
         mutation($id: ID!, $reason: DiscussionCloseReason!) {
@@ -185,7 +202,6 @@ def reopen_discussion(node_id: str) -> bool:
     if not discussion_closed(node_id):
         return False
 
-    
     graphql(
         """
         mutation($id: ID!) {
@@ -197,6 +213,7 @@ def reopen_discussion(node_id: str) -> bool:
         {"id": node_id},
     )
     return True
+
 
 def post_comment(discussion_id: str, body: str) -> None:
     graphql(
@@ -216,8 +233,9 @@ def post_comment(discussion_id: str, body: str) -> None:
 
 def extract_username(body: str) -> str | None:
     """Pull @username (or plain username) from the second token of a command of form `command <username>`"""
-    
-    collapsed = re.sub(' +', ' ', body.strip())   # squeeze runs of the space char only
+
+    # squeeze runs of the space char only
+    collapsed = re.sub(' +', ' ', body.strip())
     parts = collapsed.split(' ', maxsplit=2)
 
     return parts[1].lstrip("@") if len(parts) >= 2 else None
@@ -232,7 +250,8 @@ def parse_close(body: str) -> tuple[str | None, str | None]:
     """
 
     collapsed = re.sub(' +', ' ', body.strip())
-    parts = collapsed.split(' ', maxsplit=2)   # 0 is close, 1 is github reason, 2 is the rest
+    # 0 is close, 1 is github reason, 2 is the rest
+    parts = collapsed.split(' ', maxsplit=2)
 
     # Entire call is invalid
     if len(parts) < 2 or parts[0].strip().lower() != "close":
@@ -242,7 +261,7 @@ def parse_close(body: str) -> tuple[str | None, str | None]:
     closeReason: str | None = CLOSE_REASON_MAP.get(parts[1].strip().lower())
 
     # May exist
-    reason_text: str | None =  parts[2] if len(parts) >=3 else None
+    reason_text: str | None = parts[2] if len(parts) >= 3 else None
 
     return closeReason, reason_text
 
@@ -334,14 +353,16 @@ def do_unstrike(target: str, strike_counts: dict[str, int], strike_counts_sha: s
         return False
 
     if target not in strike_counts:
-        post_comment(DISCUSSION_NODE_ID, f"@{target} has no strikes on record.")
+        post_comment(DISCUSSION_NODE_ID,
+                     f"@{target} has no strikes on record.")
         return False
 
     strike_counts[target] -= 1
     if strike_counts[target] <= 0:
         del strike_counts[target]
 
-    write_yaml_file(STRIKES_PATH, strike_counts, strike_counts_sha, f"unstrike: {target}")
+    write_yaml_file(STRIKES_PATH, strike_counts,
+                    strike_counts_sha, f"unstrike: {target}")
     return True
 
 
@@ -408,7 +429,7 @@ def main():
             )
             return
 
-        elif FORMAT_ENFORCEMENT_ENABLED:
+        elif FORMAT_ENFORCEMENT_ENABLED and (not AUTO_CLOSE_CATEGORIES or DISCUSSION_CATEGORY in AUTO_CLOSE_CATEGORIES):
             # allow for empty bodies to also go through the same chain -- same end point in any case
             if not complies_format(DISCUSSION_BODY):
                 close_discussion(DISCUSSION_NODE_ID, "RESOLVED")
@@ -496,7 +517,6 @@ def main():
                     f"⛔ Discussion Already Open."
                 )
 
-
             return
 
         # /strike
@@ -552,7 +572,6 @@ def main():
                       banned_user_list, banned_user_list_sha)
             return
 
-
         # /unstrike <username>
         elif cmd == "unstrike":
             if not STRIKES_ENABLED:
@@ -561,11 +580,13 @@ def main():
             if ACTOR not in strikers and ACTOR not in closers and ACTOR not in moderators:
                 return
 
-            close_command_body: str = get_whole_line_after_command_from_comment_body(id_s)
+            close_command_body: str = get_whole_line_after_command_from_comment_body(
+                id_s)
 
             target: str | None = extract_username(close_command_body)
             if target is None:
-                post_comment(DISCUSSION_NODE_ID, "Usage: `/unstrike <username>`")
+                post_comment(DISCUSSION_NODE_ID,
+                             "Usage: `/unstrike <username>`")
                 return
 
             if do_unstrike(target, strike_counts_list, strike_counts_list_sha):
@@ -623,7 +644,7 @@ def main():
             # Only notify is target was actually banned
             if do_unban(target, banned_user_list, banned_user_list_sha, strike_counts_list, strike_counts_list_sha):
                 post_comment(DISCUSSION_NODE_ID,
-                            f"✅ @{target} has been unbanned by @{ACTOR}.")
+                             f"✅ @{target} has been unbanned by @{ACTOR}.")
 
 
 if __name__ == "__main__":
