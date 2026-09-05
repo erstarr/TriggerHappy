@@ -23,7 +23,7 @@ inputs:
     required: false
     default: .github/discussion_moderator/strikes.yml
   auto_close_regex:
-    description: File containing the regex that will be used to match agains opened discussions. if it does not match the regex provided, the discussion is auto closed. Have this file to enable format-enforcement feature
+    description: Regex to match against when enforcing format. Provide one to enable this feature.
     required: false
   strike_per_nonFormat:
     description: Should discussion authors who didn't obey the format also receive a strike.
@@ -54,6 +54,7 @@ runs:
         DISCUSSION_NODE_ID:   ${{ github.event.discussion.node_id }}
         DISCUSSION_AUTHOR:    ${{ github.event.discussion.user.login }}
         COMMENT_BODY:         ${{ github.event.comment.body }}
+        DISCUSSION_BODY:      ${{ github.event.discussion.body }}
         CONFIG_PATH:          ${{ inputs.config_path }}
         BANNED_PATH:          ${{ inputs.banned_path }}
         STRIKES_PATH:         ${{ inputs.strikes_path }}

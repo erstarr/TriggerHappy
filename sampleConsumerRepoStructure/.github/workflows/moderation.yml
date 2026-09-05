@@ -8,14 +8,13 @@ on:
 
 permissions:
   discussions: write   # close discussions, post comments
-  contents: write      # write back to banned.yml / strikes.yml
-  actions: write
+  contents: write      # write back to banned.yml / strikes.yml / ...
 
 jobs:
   moderate:
     runs-on: ubuntu-latest
     steps:
-      - uses: erstarr/triggerhappy@main # TODO remember to bumb when publishing first stable ver
+      - uses: erstarr/triggerhappy@main # TODO: remember to bump when publishing first stable ver
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # optional - only needed if you move the files elsewhere
@@ -25,3 +24,10 @@ jobs:
 
           # If you want to enable strikes, specify the number of strikes a user can receive before they are banned
           # strikes_to_ban:  3
+          
+          # If you want to enable auto format-enforcement, provide a regex to match against
+          # auto_close_regex: ".*"
+          
+          # Shall discussion authors that didn't obey the format receive strikes for it -- uses the strikes_to_ban quota like normal strikes
+          # strike_per_nonFormat: True
+
