@@ -15,13 +15,20 @@ inputs:
     description: Path to banned.yml in the consumer repo
     required: false
     default: .github/discussion_moderator/banned.yml
+  strikes_to_ban:
+    description: Number of strikes a user can receive before being auto-banned. Mandatory if strikes_path is provided. Set this is you want to enable strikes feature.
+    required: false
   strikes_path:
     description: Path to strikes.yml in the consumer repo. Optional
     required: false
     default: .github/discussion_moderator/strikes.yml
-  strikes_to_ban:
-    description: Number of strikes a user can receive before being auto-banned. Mandatory if strikes_path is provided, no-op otherwise.
+  auto_close_regex:
+    description: File containing the regex that will be used to match agains opened discussions. if it does not match the regex provided, the discussion is auto closed. Have this file to enable format-enforcement feature
     required: false
+  strike_per_nonFormat:
+    description: Should discussion authors who didn't obey the format also receive a strike.
+    required: false
+    default: false 
 
 runs:
   using: composite
@@ -43,12 +50,14 @@ runs:
       shell: bash
       run: python "${{ github.action_path }}/src/moderate.py"
       env:
-        GITHUB_TOKEN:       ${{ inputs.github_token }}
-        DISCUSSION_NODE_ID: ${{ github.event.discussion.node_id }}
-        DISCUSSION_AUTHOR:  ${{ github.event.discussion.user.login }}
-        COMMENT_BODY:       ${{ github.event.comment.body }}
-        CONFIG_PATH:        ${{ inputs.config_path }}
-        BANNED_PATH:        ${{ inputs.banned_path }}
-        STRIKES_PATH:       ${{ inputs.strikes_path }}
-        STRIKES_TO_BAN:     ${{ inputs.strikes_to_ban }}
+        GITHUB_TOKEN:         ${{ inputs.github_token }}
+        DISCUSSION_NODE_ID:   ${{ github.event.discussion.node_id }}
+        DISCUSSION_AUTHOR:    ${{ github.event.discussion.user.login }}
+        COMMENT_BODY:         ${{ github.event.comment.body }}
+        CONFIG_PATH:          ${{ inputs.config_path }}
+        BANNED_PATH:          ${{ inputs.banned_path }}
+        STRIKES_PATH:         ${{ inputs.strikes_path }}
+        STRIKES_TO_BAN:       ${{ inputs.strikes_to_ban }}
+        AUTO_CLOSE_REGEX:     ${{ inputs.auto_close_regex }}
+        STRIKE_PER_NONFORMAT: ${{ inputs.strike_per_nonFormat }}
         # GITHUB_REPOSITORY, GITHUB_ACTOR, GITHUB_EVENT_NAME are set automatically
