@@ -1,8 +1,9 @@
 import os
 import base64
 from datetime import datetime, timezone
+from platform import node
 import re
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 import requests
 import yaml
@@ -121,7 +122,31 @@ def write_yaml_file(path: str, content: dict[str, Any], sha: str | None, commit_
     return resp.json()["content"]["sha"]
 
 
-# ─── GraphQL - for enacting operations on discussion itself ──────────────────────────────────────────────────────────────────
+# ─── GraphQL ──────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+# --- State queries --------------------------------
+
+def discussion_closed(node_id: str) -> bool:
+    """True if discussion is closed"""
+    data = graphql(
+        """
+        query($id: ID!) {
+          node(id: $id) {
+            ... on Discussion { closed }
+          }
+        }
+        """,
+        {"id": node_id},
+    )
+    return bool(data["node"]["closed"])
+
+
+# --- for enacting operations on discussion itself --------------------------------
 
 def graphql(query: str, variables: dict[str, Any]) -> Any:
     resp = requests.post(
@@ -138,6 +163,10 @@ def graphql(query: str, variables: dict[str, Any]) -> Any:
 
 def close_discussion(node_id: str, reason: str) -> None:
     """ reason must be a DiscussionCloseReason enum: RESOLVED | OUTDATED | DUPLICATE -- because that's what github makes available """
+
+    if discussion_closed(node_id):
+        return
+    
     graphql(
         """
         mutation($id: ID!, $reason: DiscussionCloseReason!) {
@@ -152,6 +181,11 @@ def close_discussion(node_id: str, reason: str) -> None:
 
 
 def reopen_discussion(node_id: str) -> None:
+
+    if not discussion_closed(node_id):
+        return
+
+    
     graphql(
         """
         mutation($id: ID!) {
@@ -182,7 +216,10 @@ def post_comment(discussion_id: str, body: str) -> None:
 
 def extract_username(body: str) -> str | None:
     """Pull @username (or plain username) from the second token of a command of form `command <username>`"""
-    parts: list[str] = body.strip().split(sep=' ', maxsplit=3)
+    
+    collapsed = re.sub(' +', ' ', body.strip())   # squeeze runs of the space char only
+    parts = collapsed.split(' ', maxsplit=2)
+
     return parts[1].lstrip("@") if len(parts) >= 2 else None
 
 
@@ -193,8 +230,9 @@ def parse_close(body: str) -> tuple[str | None, str | None]:
     /close weeewooo                         →  ("weeewooo", None)   <- unrecognised reason
     /close                                  →  (None, None)         <- missing reason
     """
-    parts: list[str] = body.strip().split(
-        sep=" ", maxsplit=2)  # 0 is close, 1 is github reason, 2 is the rest
+
+    collapsed = re.sub(' +', ' ', body.strip())
+    parts = collapsed.split(' ', maxsplit=2)   # 0 is close, 1 is github reason, 2 is the rest
 
     # Entire call is invalid
     if len(parts) < 2 or parts[0].strip().lower() != "close":
@@ -497,7 +535,7 @@ def main():
                 return
 
             reason_parts: list[str] = get_whole_line_after_command_from_comment_body(
-                id_s).strip().split(sep=' ', maxsplit=1)
+                id_s).strip().split(maxsplit=1)
 
             reason: str | None = reason_parts[1] if len(
                 reason_parts) > 1 else None
