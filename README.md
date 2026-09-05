@@ -1,9 +1,9 @@
 
-# triggerHappy - Discussion Moderation Tool
+# TriggerHappy - Discussion Moderation Tool
 
 ## Features
 
-triggerHappy is a moderation tool for GitHub discussions.
+TriggerHappy is a moderation tool for GitHub discussions.
 
 Give select users the ability to close discussions, give strikes to users, and ban users from opening any other discussions outright (and also the ability to unban them).
 
@@ -57,7 +57,7 @@ See [Example Consumer Repo Structure](sampleConsumerRepoStructure) for a setup w
 
 ## Install
 
-See [Example Workflow](sampleConsumerRepoStructure/.github/workflows/discussion_moderation.yml) for how to integrate triggerHappy to your repo.
+See [Example Workflow](sampleConsumerRepoStructure/.github/workflows/discussion_moderation.yml) for how to integrate TriggerHappy to your repo.
 
 Follow the instructions there to enable optional features.
 
