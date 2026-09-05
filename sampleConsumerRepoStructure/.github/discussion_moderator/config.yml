@@ -1,14 +1,15 @@
 # Users who can use /close <reason>
-closers:
-  # - bob is implicit since bob is a moderator
-  - ellie
-  - allison
-
 # Users who can use /strike
 strikers:
   # - bob is implicit since bob is a moderator
+  # - allison is implicit since allison can also close
   - alice
 
-# Users who can use /ban <reason> as well as do perform any other command
+closers:
+  # - bob is implicit since bob is a moderator
+  - allison
+
+
+# Users who can use /ban <reason>, /unban, close/open discussions, as well as do perform any other command
 moderators:
   - bob
