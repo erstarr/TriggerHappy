@@ -62,5 +62,8 @@ See [Example Workflow](sampleConsumerRepoStructure/.github/workflows/moderation.
 Follow the instructions there to enable optional features.
 
 
+# To-Do
 
+- [] Multiple Messages Per Comment
+- [] Per-Strike Reasons
 
