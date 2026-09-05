@@ -1,7 +1,6 @@
 name: triggerHappy - Discussion Moderation Tool # TODO find a better name
 description: >
-  Moderates GitHub Discussions. Auto-closes discussions opened by banned users.
-  Supports /close, /strike, and /ban commands for authorised users.
+  GitHub Discussion Moderation Tool
 
 inputs:
   github_token:
@@ -16,7 +15,7 @@ inputs:
     required: false
     default: .github/discussion_moderator/banned.yml
   strikes_to_ban:
-    description: Number of strikes a user can receive before being auto-banned. Mandatory if strikes_path is provided. Set this is you want to enable strikes feature.
+    description: Number of strikes a user can receive before being auto-banned. Set this if you want to enable strikes feature.
     required: false
   strikes_path:
     description: Path to strikes.yml in the consumer repo. Optional
@@ -33,14 +32,9 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v7
       with:
         python-version: "3.12"
-
-    - uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: pip-requests-2.32.3-pyyaml-6.0.2
 
     - name: Install dependencies
       shell: bash

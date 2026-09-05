@@ -15,6 +15,7 @@ USER_COMMANDS = [
     "open",
     "strike",
     "strike-target",
+    "unstrike",
     "ban",
     "unban",
 ]
@@ -179,10 +180,10 @@ def close_discussion(node_id: str, reason: str) -> None:
     return
 
 
-def reopen_discussion(node_id: str) -> None:
+def reopen_discussion(node_id: str) -> bool:
 
     if not discussion_closed(node_id):
-        return
+        return False
 
     
     graphql(
@@ -195,7 +196,7 @@ def reopen_discussion(node_id: str) -> None:
         """,
         {"id": node_id},
     )
-    return
+    return True
 
 def post_comment(discussion_id: str, body: str) -> None:
     graphql(
@@ -226,8 +227,8 @@ def parse_close(body: str) -> tuple[str | None, str | None]:
     """
     /close RESOLVED/resolved optional note  →  ("RESOLVED", "optional note")
     /close RESOLVED/resolved                →  ("RESOLVED", "")
-    /close weeewooo                         →  ("weeewooo", None)   <- unrecognised reason
-    /close                                  →  (None, None)         <- missing reason
+    /close weeewooo                         →  ("weeewooo", None) → (None, None)  <- unrecognised reason
+    /close                                  →  (None, None)                       <- missing reason
     """
 
     collapsed = re.sub(' +', ' ', body.strip())
@@ -321,6 +322,27 @@ def do_strike(target: str, strike_counts: dict[str, int], strike_counts_sha: str
         close_discussion(DISCUSSION_NODE_ID, "RESOLVED")
 
     return
+
+
+def do_unstrike(target: str, strike_counts: dict[str, int], strike_counts_sha: str | None) -> bool:
+    """
+    Removes one strike from target. Deletes the entry entirely if the
+    count would drop to 0 or below. Returns False (no-op) if target has
+    no strikes on record.
+    """
+    if not STRIKES_ENABLED:
+        return False
+
+    if target not in strike_counts:
+        post_comment(DISCUSSION_NODE_ID, f"@{target} has no strikes on record.")
+        return False
+
+    strike_counts[target] -= 1
+    if strike_counts[target] <= 0:
+        del strike_counts[target]
+
+    write_yaml_file(STRIKES_PATH, strike_counts, strike_counts_sha, f"unstrike: {target}")
+    return True
 
 
 def clear_strikes(target: str, strike_counts: dict[str, int], strike_counts_sha: str | None) -> None:
@@ -463,7 +485,18 @@ def main():
         elif cmd == "open":
             if ACTOR not in closers and ACTOR not in moderators:
                 return
-            reopen_discussion(DISCUSSION_NODE_ID)
+            if reopen_discussion(DISCUSSION_NODE_ID):
+                post_comment(
+                    DISCUSSION_NODE_ID,
+                    f"✅ Discussion Re-Opened by @{ACTOR}."
+                )
+            else:
+                post_comment(
+                    DISCUSSION_NODE_ID,
+                    f"⛔ Discussion Already Open."
+                )
+
+
             return
 
         # /strike
@@ -517,6 +550,29 @@ def main():
 
             do_strike(target, strike_counts_list, strike_counts_list_sha,
                       banned_user_list, banned_user_list_sha)
+            return
+
+
+        # /unstrike <username>
+        elif cmd == "unstrike":
+            if not STRIKES_ENABLED:
+                return
+
+            if ACTOR not in strikers and ACTOR not in closers and ACTOR not in moderators:
+                return
+
+            close_command_body: str = get_whole_line_after_command_from_comment_body(id_s)
+
+            target: str | None = extract_username(close_command_body)
+            if target is None:
+                post_comment(DISCUSSION_NODE_ID, "Usage: `/unstrike <username>`")
+                return
+
+            if do_unstrike(target, strike_counts_list, strike_counts_list_sha):
+                post_comment(
+                    DISCUSSION_NODE_ID,
+                    f"✅ One strike removed from @{target} by @{ACTOR}."
+                )
             return
 
         # /ban <reason>
