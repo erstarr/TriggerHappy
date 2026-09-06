@@ -62,18 +62,17 @@ See [Example Consumer Repo Structure](sampleConsumerRepoStructure) for a setup w
 
 ### Single Repo
 
-See [Example Workflow](sampleConsumerRepoStructure/.github/workflows/discussion_moderation_storage.yml) for how to integrate TriggerHappy to your repo.
+See [Example Workflow](sampleConsumerRepoStructure/.github/workflows/discussion_moderation.yml) for how to integrate TriggerHappy to your repo.
 
 Follow the instructions there to enable optional features.
 
 ### Multiple Repos
 
-See sampleConsumerRepoStructure/.github/workflows/discussion_moderation_storage.yml for setting up Storage Repo
+You need to set up "Fine-grained PAT" for the consumer repo to be able to act on the storage repo. Use `CROSS_REPO_TOKEN` to store the storage repo token.
 
-See sampleConsumerRepoStructure/.github/workflows/discussion_moderation_consumer.yml for setting up Consumer Repo(s)
+See sampleConsumerRepoStructure/.github/workflows/discussion_moderation.yml for setting up Consumer Repo(s)
 
-
-
+The paths paths across all consumer repos MUST BE SYNCED!
 
 # To-Do
 
