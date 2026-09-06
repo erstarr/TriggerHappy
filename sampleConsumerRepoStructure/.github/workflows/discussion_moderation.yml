@@ -19,6 +19,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
           # optional - only needed if you move the files elsewhere
+          storage_repo: your_org/yourRepo
           config_path:  .github/discussion_moderator/config.yml
           banned_path:  .github/discussion_moderator/banned.yml
           strikes_path: .github/discussion_moderator/strikes.yml
