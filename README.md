@@ -22,6 +22,7 @@ Give select users the ability to close discussions, give strikes to users, and b
 - Strikes: You can choose to enable strikes.
     - Auto-Banning when a user has reached the number of allowed strikes. This number is configurable.
 - Format Enforcemen: Can auto-close discussions that do not match the provided format regex.
+    - Limit enforcement to certain discussion categories (use category names!)
     - Auto-Strike: Can choose to give users strikes for their non-format-complicant discussion.
 
 

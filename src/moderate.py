@@ -72,7 +72,7 @@ FORMAT_REGEX: str = os.environ.get("AUTO_CLOSE_REGEX", "").strip()
 FORMAT_ENFORCEMENT_ENABLED: bool = bool(FORMAT_REGEX)
 
 DISCUSSION_CATEGORY: str = os.environ.get("DISCUSSION_CATEGORY", "")
-AUTO_CLOSE_CATEGORIES: set[str] = {c.strip() for c in os.environ.get("AUTO_CLOSE_CATEGORIES", "").split(", ") if c.strip()}
+AUTO_CLOSE_CATEGORIES: set[str] = {c.strip() for c in os.environ.get("AUTO_CLOSE_CATEGORIES", "").split(",") if c.strip()}
 
 FORMAT_ENFORCEMENT_STRIKES_ENABLED: bool = True if os.environ.get(
     "STRIKE_PER_NONFORMAT", "").strip().lower() == "true" else False

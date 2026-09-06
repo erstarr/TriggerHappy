@@ -52,7 +52,7 @@ runs:
         DISCUSSION_AUTHOR:     ${{ github.event.discussion.user.login }}
         COMMENT_BODY:          ${{ github.event.comment.body }}
         DISCUSSION_BODY:       ${{ github.event.discussion.body }}
-        DISCUSSION_CATEGORY:   ${{ github.event.discussion.category.slug }}
+        DISCUSSION_CATEGORY:   ${{ github.event.discussion.category.name }}
         CONFIG_PATH:           ${{ inputs.config_path }}
         BANNED_PATH:           ${{ inputs.banned_path }}
         STRIKES_PATH:          ${{ inputs.strikes_path }}
