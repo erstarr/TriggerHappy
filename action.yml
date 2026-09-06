@@ -3,6 +3,9 @@ description: >
   GitHub Discussion Moderation Tool
 
 inputs:
+  github_token:
+    description: GitHub token with discussions:write and contents:write
+    required: true
   storage_repo:
     description: >
       owner/repo to store config.yml, banned.yml, strikes.yml in.
@@ -51,7 +54,7 @@ runs:
       shell: bash
       run: python "${{ github.action_path }}/src/moderate.py"
       env:
-        github_token:          ${{ secrets.CROSS_REPO_TOKEN || secrets.GITHUB_TOKEN }} # if CROSS_REPO_TOKEN is set, it is assumed user wants to use cross-repo mode
+        GITHUB_TOKEN:          ${{ inputs.github_token }}
         STORAGE_REPO:          ${{ inputs.storage_repo }}
         DISCUSSION_NODE_ID:    ${{ github.event.discussion.node_id }}
         DISCUSSION_AUTHOR:     ${{ github.event.discussion.user.login }}

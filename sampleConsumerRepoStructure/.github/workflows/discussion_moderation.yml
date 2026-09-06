@@ -16,6 +16,7 @@ jobs:
     steps:
       - uses: erstarr/TriggerHappy@main # TODO: remember to bump when publishing first stable ver
         with:
+          github_token: ${{ secrets.CROSS_REPO_TOKEN || secrets.GITHUB_TOKEN }}
           # optional - only needed if you move the files elsewhere
           storage_repo: your_org/yourRepo
           config_path:  .github/discussion_moderator/config.yml
