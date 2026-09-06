@@ -28,6 +28,11 @@ CLOSE_REASON_MAP = {
     "duplicate": "DUPLICATE",
 }
 
+
+# Commit Identity - this will show up as in moderation git commits
+
+COMMIT_IDENTITY: dict[str, str] = {"name": "github-actions[bot]", "email": "41898282+github-actions[bot]@users.noreply.github.com"}
+
 # ─── Environment ──────────────────────────────────────────────────────────────
 # GITHUB_REPOSITORY, GITHUB_ACTOR, GITHUB_EVENT_NAME are set automatically
 # by the runner. Everything else is passed explicitly from action.yml.
@@ -102,17 +107,19 @@ def read_yaml_file(path: str, firstWriteWillCreate: bool = True) -> tuple[dict[A
         base64.b64decode(data["content"])) or {})
     return parsed, data["sha"]
 
-def write_yaml_file(path: str, content: dict[str, Any], sha: str | None, commit_msg: str) -> str:
+def write_yaml_filez(path: str, content: dict[str, Any], sha: str | None, commit_msg: str) -> str:
     """
     Returns str: sha.
     """
 
-    body: dict[str, str] = {
+    body: dict[str, Any] = {
         "message": commit_msg,
         "content": base64.b64encode(
             yaml.dump(content, default_flow_style=False,
                       allow_unicode=True).encode()
         ).decode(),
+        "author": COMMIT_IDENTITY,
+        "committer": COMMIT_IDENTITY,
     }
     if sha:
         body["sha"] = sha
