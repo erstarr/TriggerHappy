@@ -24,6 +24,8 @@ Give select users the ability to close discussions, give strikes to users, and b
 - Format Enforcemen: Can auto-close discussions that do not match the provided format regex.
     - Limit enforcement to certain discussion categories (use category names!)
     - Auto-Strike: Can choose to give users strikes for their non-format-complicant discussion.
+- Moderate multiple repos / Split storage repo to avoid commit spam in main repo
+    - Allows you to keep the same list of privilaged and offending users across multiple repos. This can also be used to separate which repo stores the list of these users to avoid spamming your main repo(s) with moderation commits.
 
 
 ### Commands
@@ -58,9 +60,19 @@ See [Example Consumer Repo Structure](sampleConsumerRepoStructure) for a setup w
 
 ## Install
 
-See [Example Workflow](sampleConsumerRepoStructure/.github/workflows/discussion_moderation.yml) for how to integrate TriggerHappy to your repo.
+### Single Repo
+
+See [Example Workflow](sampleConsumerRepoStructure/.github/workflows/discussion_moderation_storage.yml) for how to integrate TriggerHappy to your repo.
 
 Follow the instructions there to enable optional features.
+
+### Multiple Repos
+
+See sampleConsumerRepoStructure/.github/workflows/discussion_moderation_storage.yml for setting up Storage Repo
+
+See sampleConsumerRepoStructure/.github/workflows/discussion_moderation_consumer.yml for setting up Consumer Repo(s)
+
+
 
 
 # To-Do

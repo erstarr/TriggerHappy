@@ -1,3 +1,16 @@
-- uses: erstarr/TriggerHappy@main
-  with:
-    github_token: ${{ secrets.CROSS_REPO_TOKEN }}
+name: TriggerHappy - Discussion Moderation Tool
+
+on:
+  discussion:
+    types: [created]
+  discussion_comment:
+    types: [created]
+
+jobs:
+  moderate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: erstarr/TriggerHappy@main
+        with:
+          github_token: ${{ secrets.CROSS_REPO_TOKEN }}
+          storage_repo: your-org/.github
