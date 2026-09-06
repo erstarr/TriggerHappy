@@ -107,7 +107,7 @@ def read_yaml_file(path: str, firstWriteWillCreate: bool = True) -> tuple[dict[A
         base64.b64decode(data["content"])) or {})
     return parsed, data["sha"]
 
-def write_yaml_filez(path: str, content: dict[str, Any], sha: str | None, commit_msg: str) -> str:
+def write_yaml_file(path: str, content: dict[str, Any], sha: str | None, commit_msg: str) -> str:
     """
     Returns str: sha.
     """
