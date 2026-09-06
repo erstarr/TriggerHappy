@@ -26,6 +26,7 @@ jobs:
           strikes_to_ban:  3
           # optional feature - If you want to enable auto format-enforcement, provide a regex to match against
           auto_close_regex: ".*"
+          strike_per_nonFormat: "General, Bugs, Feature Requests"
           # optional feature - Shall discussion authors that didn't obey the format receive strikes for it -- uses the strikes_to_ban quota like normal strikes
           strike_per_nonFormat: True
 

@@ -71,6 +71,9 @@ FORMAT_REGEX: str = os.environ.get("AUTO_CLOSE_REGEX", "").strip()
 
 FORMAT_ENFORCEMENT_ENABLED: bool = bool(FORMAT_REGEX)
 
+DISCUSSION_CATEGORY: str = os.environ.get("DISCUSSION_CATEGORY", "")
+AUTO_CLOSE_CATEGORIES: set[str] = {c.strip() for c in os.environ.get("AUTO_CLOSE_CATEGORIES", "").split(", ") if c.strip()}
+
 FORMAT_ENFORCEMENT_STRIKES_ENABLED: bool = True if os.environ.get(
     "STRIKE_PER_NONFORMAT", "").strip().lower() == "true" else False
 
@@ -408,7 +411,7 @@ def main():
             )
             return
 
-        elif FORMAT_ENFORCEMENT_ENABLED:
+        elif FORMAT_ENFORCEMENT_ENABLED and (not AUTO_CLOSE_CATEGORIES or DISCUSSION_CATEGORY in AUTO_CLOSE_CATEGORIES):
             # allow for empty bodies to also go through the same chain -- same end point in any case
             if not complies_format(DISCUSSION_BODY):
                 close_discussion(DISCUSSION_NODE_ID, "RESOLVED")
