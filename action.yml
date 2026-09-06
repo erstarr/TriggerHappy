@@ -3,9 +3,6 @@ description: >
   GitHub Discussion Moderation Tool
 
 inputs:
-  github_token:
-    description: GitHub token with discussions:write and contents:write
-    required: true
   storage_repo:
     description: >
       owner/repo to store config.yml, banned.yml, strikes.yml in.
