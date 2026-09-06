@@ -58,6 +58,6 @@ runs:
         STRIKES_PATH:          ${{ inputs.strikes_path }}
         STRIKES_TO_BAN:        ${{ inputs.strikes_to_ban }}
         AUTO_CLOSE_REGEX:      ${{ inputs.auto_close_regex }}
-        AUTO_CLOSE_CATEGORIES: ${{ auto_close_categories }}
+        AUTO_CLOSE_CATEGORIES: ${{ inputs.auto_close_categories }}
         STRIKE_PER_NONFORMAT:  ${{ inputs.strike_per_nonFormat }}
         # GITHUB_REPOSITORY, GITHUB_ACTOR, GITHUB_EVENT_NAME are set automatically
