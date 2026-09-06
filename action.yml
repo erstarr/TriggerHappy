@@ -54,7 +54,7 @@ runs:
       shell: bash
       run: python "${{ github.action_path }}/src/moderate.py"
       env:
-        GITHUB_TOKEN:          ${{ inputs.github_token }}
+        github_token:          ${{ secrets.CROSS_REPO_TOKEN || secrets.GITHUB_TOKEN }} # if CROSS_REPO_TOKEN is set, it is assumed user wants to use cross-repo mode
         STORAGE_REPO:          ${{ inputs.storage_repo }}
         DISCUSSION_NODE_ID:    ${{ github.event.discussion.node_id }}
         DISCUSSION_AUTHOR:     ${{ github.event.discussion.user.login }}
