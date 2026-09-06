@@ -34,6 +34,7 @@ CLOSE_REASON_MAP = {
 
 TOKEN: str = os.environ["GITHUB_TOKEN"]
 REPO: str = os.environ["GITHUB_REPOSITORY"]
+STORAGE_REPO: str = os.environ.get("STORAGE_REPO", "").strip() or REPO
 ACTOR: str = os.environ["GITHUB_ACTOR"]
 EVENT: str = os.environ["GITHUB_EVENT_NAME"]
 
@@ -88,7 +89,7 @@ def read_yaml_file(path: str, firstWriteWillCreate: bool = True) -> tuple[dict[A
     firstWriteWillCreate = True -> sha is None when the file doesn't exist yet (first write will create it).
     """
     resp: requests.Response = requests.get(
-        url=f"https://api.github.com/repos/{REPO}/contents/{path}",
+        url=f"https://api.github.com/repos/{STORAGE_REPO}/contents/{path}",
         headers=HEADERS,
     )
     if firstWriteWillCreate and resp.status_code == 404:
@@ -117,7 +118,7 @@ def write_yaml_file(path: str, content: dict[str, Any], sha: str | None, commit_
         body["sha"] = sha
 
     resp = requests.put(
-        f"https://api.github.com/repos/{REPO}/contents/{path}",
+        f"https://api.github.com/repos/{STORAGE_REPO}/contents/{path}",
         headers={**HEADERS, "Content-Type": "application/json"},
         json=body,
     )

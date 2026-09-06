@@ -22,7 +22,7 @@ jobs:
           config_path:  .github/discussion_moderator/config.yml
           banned_path:  .github/discussion_moderator/banned.yml
           strikes_path: .github/discussion_moderator/strikes.yml
-          # optional feature - If you want to enable strikes, specify the number of strikes a user can receive before they are banned
+          storage_repo:
           strikes_to_ban:  3
           # optional feature - If you want to enable auto format-enforcement, provide a regex to match against
           auto_close_regex: ".*"

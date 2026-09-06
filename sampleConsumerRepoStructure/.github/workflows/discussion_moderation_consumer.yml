@@ -1,0 +1,3 @@
+- uses: erstarr/TriggerHappy@main
+  with:
+    github_token: ${{ secrets.CROSS_REPO_TOKEN }}
