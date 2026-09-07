@@ -4,8 +4,12 @@ description: >
 
 inputs:
   github_token:
-    description: GitHub token with discussions:write and contents:write
+    description: Token for Discussions actions (comments, close/reopen) in the repo running this workflow. Pass the default token so actions post as github-actions[bot].
     required: true
+  storage_token:
+    description: Token for reading/writing config.yml, banned.yml, strikes.yml, and other storage files. Only needed if storage_repo points at a different repo. Falls back to github_token.
+    required: false
+    default: ${{ github.token }}
   storage_repo:
     description: >
       owner/repo to store config.yml, banned.yml, strikes.yml in.
@@ -55,6 +59,7 @@ runs:
       run: python "${{ github.action_path }}/src/moderate.py"
       env:
         GITHUB_TOKEN:          ${{ inputs.github_token }}
+        STORAGE_TOKEN:         ${{ inputs.storage_token }}
         STORAGE_REPO:          ${{ inputs.storage_repo }}
         DISCUSSION_NODE_ID:    ${{ github.event.discussion.node_id }}
         DISCUSSION_AUTHOR:     ${{ github.event.discussion.user.login }}
