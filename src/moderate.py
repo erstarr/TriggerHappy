@@ -128,6 +128,8 @@ def write_yaml_file(path: str, content: dict[str, Any], sha: str | None, commit_
             yaml.dump(content, default_flow_style=False,
                       allow_unicode=True).encode()
         ).decode(),
+        "author": COMMIT_IDENTITY,
+        "committer": COMMIT_IDENTITY,
     }
     if sha:
         body["sha"] = sha
