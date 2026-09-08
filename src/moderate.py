@@ -663,10 +663,10 @@ def main():
                 return
 
             reason_parts: list[str] = get_whole_line_after_command_from_comment_body(
-                cmd_start).strip().split(maxsplit=1)
+                cmd_start).strip().split(maxsplit=2)
 
-            reason: str | None = reason_parts[1] if len(
-                reason_parts) > 1 else None
+            reason: str | None = reason_parts[2] if len(
+                reason_parts) > 2 else None
             if reason is None:
                 post_comment(DISCUSSION_NODE_ID, "Usage: `/ban <reason>`")
                 return
