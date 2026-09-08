@@ -32,16 +32,17 @@ Give select users the ability to close discussions, give strikes to users, and b
 
 Commands:
 
-- `/strike`: strikes the discussion opener
+- `/strike-author`: strikes the discussion opener
 - `/strike-target [@]<user>`: Strike a custom target.
-- `/unstrike [@]<user>`: Remove a strike from a user
+- `/unstrike-target [@]<user>`: Remove a strike from a user
 
 
 - `/close <resolved|outdated|duplicate> [note]`: Close the discussion with a github-provided reason, as well as an optional user-provided reason.
 - `/open`: Re-opens a closed discussion
 
-- `/ban <reason>`: Bans the discussion opener with a reason.
-- `/unban [@]<user>`: Unbans a user
+- `/ban-author <reason>`: Bans the discussion opener with a reason.
+- `/ban-target [@]<user> <reason>`: Bans a specific user with a reason.
+- `/unban-target [@]<user>`: Unbans a user.
 
 
 The ban author is `__system__` if user is banned by strikes.
