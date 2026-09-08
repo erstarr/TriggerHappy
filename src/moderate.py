@@ -17,6 +17,7 @@ USER_COMMANDS = [
     "strike-target",
     "unstrike",
     "ban",
+    "ban-target"
     "unban",
 ]
 
@@ -232,7 +233,7 @@ def post_comment(discussion_id: str, body: str) -> None:
 
 
 def extract_username(body: str) -> str | None:
-    """Pull @username (or plain username) from the second token of a command of form `command <username>`"""
+    """Pull @username (or plain username) from the second token of a command of form `command [@]<username>`"""
 
     # squeeze runs of the space char only
     collapsed = re.sub(' +', ' ', body.strip())
@@ -449,23 +450,24 @@ def main():
 
         # Get command
         cmd: str = ""
-        id_s: int = -1
+        # first letter afther `/`
+        cmd_start: int = -1
         while True:
-            id_s = COMMENT_BODY.find('/', id_s+1)
-            if id_s == -1:
+            cmd_start = COMMENT_BODY.find('/', cmd_start+1)
+            if cmd_start == -1:
                 break
 
             # start from the index right after '/'
-            id_s += 1
+            cmd_start += 1
 
             m: re.Match[str] | None = re.match(
-                pattern=r"\w+(\-\w+)?", string=COMMENT_BODY[id_s:])
+                pattern=r"\w+(\-\w+)?", string=COMMENT_BODY[cmd_start:])
             if not m:
                 continue          # nothing valid after '/' -> skip
-            id_e: int = id_s + m.end()
+            cmd_end: int = cmd_start + m.end()
 
             for e in USER_COMMANDS:
-                if COMMENT_BODY[id_s:id_e].strip().lower() == e:
+                if COMMENT_BODY[cmd_start:cmd_end].strip().lower() == e:
                     cmd = e
                     break
             if cmd != "":
@@ -480,7 +482,7 @@ def main():
                 return
 
             close_command_body: str = get_whole_line_after_command_from_comment_body(
-                id_s)
+                cmd_start)
 
             enum_reason: str | None
             human_reason: str | None
@@ -542,7 +544,7 @@ def main():
                       banned_user_list, banned_user_list_sha)
             return
 
-        # /strike-target <username>
+        # /strike-target [@]<username>
         elif cmd == "strike-target":
             # strikes not configured
             if not STRIKES_ENABLED:
@@ -552,12 +554,12 @@ def main():
                 return
 
             close_command_body: str = get_whole_line_after_command_from_comment_body(
-                id_s)
+                cmd_start)
 
             target: str | None = extract_username(close_command_body)
             if target is None:
                 post_comment(DISCUSSION_NODE_ID,
-                             "Usage: `/strike-target <username>`")
+                             "Usage: `/strike-target [@]<username>`")
                 return
 
             # If user already banned, don't strike. It's rude to hit someone when they're down.
@@ -572,7 +574,7 @@ def main():
                       banned_user_list, banned_user_list_sha)
             return
 
-        # /unstrike <username>
+        # /unstrike [@]<username>
         elif cmd == "unstrike":
             if not STRIKES_ENABLED:
                 return
@@ -581,12 +583,12 @@ def main():
                 return
 
             close_command_body: str = get_whole_line_after_command_from_comment_body(
-                id_s)
+                cmd_start)
 
             target: str | None = extract_username(close_command_body)
             if target is None:
                 post_comment(DISCUSSION_NODE_ID,
-                             "Usage: `/unstrike <username>`")
+                             "Usage: `/unstrike [@]<username>`")
                 return
 
             if do_unstrike(target, strike_counts_list, strike_counts_list_sha):
@@ -606,12 +608,12 @@ def main():
             if target in banned_user_list:
                 post_comment(
                     discussion_id=DISCUSSION_NODE_ID,
-                    body=f"@{target} already banned"
+                    body=f"@{target} is already banned."
                 )
                 return
 
             reason_parts: list[str] = get_whole_line_after_command_from_comment_body(
-                id_s).strip().split(maxsplit=1)
+                cmd_start).strip().split(maxsplit=1)
 
             reason: str | None = reason_parts[1] if len(
                 reason_parts) > 1 else None
@@ -628,13 +630,53 @@ def main():
             )
             close_discussion(DISCUSSION_NODE_ID, "RESOLVED")
 
-        # /unban <username>
+        # /ban-target [@]<username>
+        elif cmd == "ban-target":
+            if ACTOR not in moderators:
+                return
+
+            ban_command_body: str = get_whole_line_after_command_from_comment_body(cmd_start)
+            target: str | None = extract_username(ban_command_body)
+
+            if target not in banned_user_list:
+                post_comment(
+                    discussion_id=DISCUSSION_NODE_ID,
+                    body=f"@{target} is already banned."
+                )
+                return
+
+
+            reason_parts: list[str] = get_whole_line_after_command_from_comment_body(
+                cmd_start).strip().split(maxsplit=1)
+
+            reason: str | None = reason_parts[1] if len(
+                reason_parts) > 1 else None
+            if reason is None:
+                post_comment(DISCUSSION_NODE_ID, "Usage: `/ban <reason>`")
+                return
+
+            do_ban(target, ACTOR, reason, banned_user_list,
+                   banned_user_list_sha, strike_counts_list, strike_counts_list_sha)
+
+            post_comment(
+                DISCUSSION_NODE_ID,
+                f"🔨 @{target} banned by @{ACTOR} with reason: {reason}"
+            )
+
+            # Can ban users for posting comments and whatnot too. If you ban the discussion author, that discussion is to be closed
+            if target == DISCUSSION_AUTHOR:
+                close_discussion(DISCUSSION_NODE_ID, "RESOLVED")
+
+            return
+
+
+        # /unban [@]<username>
         elif cmd == "unban":
             if ACTOR not in moderators:
                 return
 
             close_command_body: str = get_whole_line_after_command_from_comment_body(
-                id_s)
+                cmd_start)
 
             target: str | None = extract_username(close_command_body)
             if target is None:
