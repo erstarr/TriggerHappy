@@ -17,7 +17,7 @@ USER_COMMANDS = [
     "strike-target",
     "unstrike",
     "ban",
-    "ban-target"
+    "ban-target",
     "unban",
 ]
 
@@ -678,8 +678,6 @@ def main():
             if target == DISCUSSION_AUTHOR:
                 close_discussion(DISCUSSION_NODE_ID, "RESOLVED")
             return
-
-        
 
         # /unban [@]<username>
         elif cmd == "unban":
