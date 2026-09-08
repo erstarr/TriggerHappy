@@ -647,12 +647,10 @@ def main():
             if ACTOR not in moderators:
                 return
 
-            ban_command_body: str = get_whole_line_after_command_from_comment_body(
-                cmd_start)
+            ban_command_body: str = get_whole_line_after_command_from_comment_body(id_s=cmd_start)
 
             target: str | None = extract_username(ban_command_body)
-            reason_parts: list[str] = get_whole_line_after_command_from_comment_body(
-                cmd_start).strip().split(maxsplit=2)
+            reason_parts: list[str] = ban_command_body.strip().split(maxsplit=2)
 
             reason: str | None = reason_parts[2] if len(
                 reason_parts) > 2 else None
