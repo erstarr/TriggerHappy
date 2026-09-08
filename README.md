@@ -41,7 +41,8 @@ Commands:
 - `/open`: Re-opens a closed discussion
 
 - `/ban <reason>`: Bans the discussion opener with a reason.
-- `/unban [@]<user>`: Unbans a user
+- `/ban-target [@]<user> <reason>`: Bans a specific user with a reason.
+- `/unban [@]<user>`: Unbans a user.
 
 
 The ban author is `__system__` if user is banned by strikes.
