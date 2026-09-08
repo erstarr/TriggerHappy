@@ -103,11 +103,15 @@ def read_yaml_file(path: str, firstWriteWillCreate: bool = True) -> tuple[dict[A
     Returns (parsed_dict, sha).
     firstWriteWillCreate = True -> sha is None when the file doesn't exist yet (first write will create it).
     """
+
+    print("reading yaml file in path: {}\nWill first write call to file create it: {}", path, firstWriteWillCreate)
+
     resp: requests.Response = requests.get(
         url=f"https://api.github.com/repos/{STORAGE_REPO}/contents/{path}",
         headers=STORAGE_HEADERS,
     )
     if firstWriteWillCreate and resp.status_code == 404:
+        print("Returning without error 404 because first write will create the file")
         return {}, None
     # Any other error - we have an actual problem
     resp.raise_for_status()
@@ -122,6 +126,9 @@ def write_yaml_file(path: str, content: dict[str, Any], sha: str | None, commit_
     """
     Returns str: sha.
     """
+
+    print("Writing to yaml file in path: {}\nContent: {}", path, commit_msg, content)
+
 
     body: dict[str, Any] = {
         "message": commit_msg,
@@ -629,22 +636,28 @@ def main():
                 f"🔨 @{target} banned by @{ACTOR} with reason: {reason}"
             )
             close_discussion(DISCUSSION_NODE_ID, "RESOLVED")
+            return
 
-        # /ban-target [@]<username>
+        # /ban-target [@]<username> <reason>
         elif cmd == "ban-target":
             if ACTOR not in moderators:
                 return
 
-            ban_command_body: str = get_whole_line_after_command_from_comment_body(cmd_start)
-            target: str | None = extract_username(ban_command_body)
+            ban_command_body: str = get_whole_line_after_command_from_comment_body(
+                cmd_start)
 
-            if target not in banned_user_list:
+            target: str | None = extract_username(ban_command_body)
+            if target is None:
+                post_comment(DISCUSSION_NODE_ID,
+                             "Usage: `/ban-target [@]<username> <reason>`")
+                return
+
+            if target in banned_user_list:
                 post_comment(
                     discussion_id=DISCUSSION_NODE_ID,
                     body=f"@{target} is already banned."
                 )
                 return
-
 
             reason_parts: list[str] = get_whole_line_after_command_from_comment_body(
                 cmd_start).strip().split(maxsplit=1)
@@ -662,13 +675,10 @@ def main():
                 DISCUSSION_NODE_ID,
                 f"🔨 @{target} banned by @{ACTOR} with reason: {reason}"
             )
-
-            # Can ban users for posting comments and whatnot too. If you ban the discussion author, that discussion is to be closed
-            if target == DISCUSSION_AUTHOR:
-                close_discussion(DISCUSSION_NODE_ID, "RESOLVED")
-
+            close_discussion(DISCUSSION_NODE_ID, "RESOLVED")
             return
 
+        
 
         # /unban [@]<username>
         elif cmd == "unban":
