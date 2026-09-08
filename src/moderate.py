@@ -681,7 +681,7 @@ def main():
             return
 
         # /unban-target [@]<username>
-        elif cmd == "unban":
+        elif cmd == "unban-target":
             if ACTOR not in moderators:
                 return
 
