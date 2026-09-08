@@ -16,12 +16,12 @@ import yaml
 USER_COMMANDS = [
     "close",
     "open",
-    "strike",
+    "strike-author",
     "strike-target",
-    "unstrike",
-    "ban",
+    "unstrike-target",
+    "ban-author",
     "ban-target",
-    "unban",
+    "unban-target",
 ]
 
 
@@ -531,8 +531,8 @@ def main():
 
             return
 
-        # /strike
-        elif cmd == "strike":
+        # /strike-author
+        elif cmd == "strike-author":
             # strikes not configured
             if not STRIKES_ENABLED:
                 return
@@ -546,7 +546,7 @@ def main():
             if target in banned_user_list:
                 post_comment(
                     discussion_id=DISCUSSION_NODE_ID,
-                    body=f"@{target} already banned"
+                    body=f"@{target} already banned."
                 )
                 return
 
@@ -576,7 +576,7 @@ def main():
             if target in banned_user_list:
                 post_comment(
                     discussion_id=DISCUSSION_NODE_ID,
-                    body=f"@{target} already banned"
+                    body=f"@{target} already banned."
                 )
                 return
 
@@ -584,8 +584,8 @@ def main():
                       banned_user_list, banned_user_list_sha)
             return
 
-        # /unstrike [@]<username>
-        elif cmd == "unstrike":
+        # /unstrike-target [@]<username>
+        elif cmd == "unstrike-target":
             if not STRIKES_ENABLED:
                 return
 
@@ -598,7 +598,7 @@ def main():
             target: str | None = extract_username(close_command_body)
             if target is None:
                 post_comment(DISCUSSION_NODE_ID,
-                             "Usage: `/unstrike [@]<username>`")
+                             "Usage: `/unstrike-target [@]<username>`")
                 return
 
             if do_unstrike(target, strike_counts_list, strike_counts_list_sha):
@@ -608,8 +608,8 @@ def main():
                 )
             return
 
-        # /ban <reason>
-        elif cmd == "ban":
+        # /ban-author <reason>
+        elif cmd == "ban-author":
             if ACTOR not in moderators:
                 return
 
@@ -627,8 +627,9 @@ def main():
 
             reason: str | None = reason_parts[1] if len(
                 reason_parts) > 1 else None
+
             if reason is None:
-                post_comment(DISCUSSION_NODE_ID, "Usage: `/ban <reason>`")
+                post_comment(DISCUSSION_NODE_ID, "Usage: `/ban-author <reason>`")
                 return
 
             do_ban(target, ACTOR, reason, banned_user_list,
@@ -650,7 +651,13 @@ def main():
                 cmd_start)
 
             target: str | None = extract_username(ban_command_body)
-            if target is None:
+            reason_parts: list[str] = get_whole_line_after_command_from_comment_body(
+                cmd_start).strip().split(maxsplit=2)
+
+            reason: str | None = reason_parts[2] if len(
+                reason_parts) > 2 else None
+
+            if target is None or reason is None:
                 post_comment(DISCUSSION_NODE_ID,
                              "Usage: `/ban-target [@]<username> <reason>`")
                 return
@@ -660,15 +667,6 @@ def main():
                     discussion_id=DISCUSSION_NODE_ID,
                     body=f"@{target} is already banned."
                 )
-                return
-
-            reason_parts: list[str] = get_whole_line_after_command_from_comment_body(
-                cmd_start).strip().split(maxsplit=2)
-
-            reason: str | None = reason_parts[2] if len(
-                reason_parts) > 2 else None
-            if reason is None:
-                post_comment(DISCUSSION_NODE_ID, "Usage: `/ban <reason>`")
                 return
 
             do_ban(target, ACTOR, reason, banned_user_list,
@@ -682,7 +680,7 @@ def main():
                 close_discussion(DISCUSSION_NODE_ID, "RESOLVED")
             return
 
-        # /unban [@]<username>
+        # /unban-target [@]<username>
         elif cmd == "unban":
             if ACTOR not in moderators:
                 return
@@ -692,7 +690,14 @@ def main():
 
             target: str | None = extract_username(close_command_body)
             if target is None:
-                post_comment(DISCUSSION_NODE_ID, "Usage: `/unban @username`")
+                post_comment(DISCUSSION_NODE_ID, "Usage: `/unban-target [@]<username>`")
+                return
+
+            if target not in banned_user_list:
+                post_comment(
+                    discussion_id=DISCUSSION_NODE_ID,
+                    body=f"@{target} is not banned."
+                )
                 return
 
             # Only notify is target was actually banned
