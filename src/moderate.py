@@ -675,7 +675,8 @@ def main():
                 DISCUSSION_NODE_ID,
                 f"🔨 @{target} banned by @{ACTOR} with reason: {reason}"
             )
-            close_discussion(DISCUSSION_NODE_ID, "RESOLVED")
+            if target == DISCUSSION_AUTHOR:
+                close_discussion(DISCUSSION_NODE_ID, "RESOLVED")
             return
 
         
