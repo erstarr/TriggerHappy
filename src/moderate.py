@@ -8,6 +8,9 @@ import requests
 import yaml
 
 
+#TODO: logging - complete prints for debug logs
+
+
 # Possible User Commands
 
 USER_COMMANDS = [
