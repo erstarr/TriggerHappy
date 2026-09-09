@@ -3,12 +3,13 @@ import base64
 from datetime import datetime, timezone
 import re
 from typing import Any, cast
+from enum import Flag, auto
 
 import requests
 import yaml
 
 
-#TODO: logging - complete prints for debug logs
+# TODO: logging - complete prints for debug logs
 
 
 # Possible User Commands
@@ -33,14 +34,23 @@ CLOSE_REASON_MAP = {
 }
 
 
-# Commit Identity - this will show up as in moderation git commits
+# Actions
+class eAction_Type(Flag):
+    NONE_ACTION = 1 << 0
+    AUTOMATED_ACTION = 1 << 1
+    COMMENT_ACTION = 1 << 2
+    DISCUSSION_ACTION = 1 << 3
 
+
+# Commit Identity - this will show up as in moderation git commits
 COMMIT_IDENTITY: dict[str, str] = {"name": "github-actions[bot]",
                                    "email": "41898282+github-actions[bot]@users.noreply.github.com"}
 
 # ─── Environment ──────────────────────────────────────────────────────────────
 # GITHUB_REPOSITORY, GITHUB_ACTOR, GITHUB_EVENT_NAME are set automatically
 # by the runner. Everything else is passed explicitly from action.yml.
+
+# Tokens and Headers
 
 # Discussion interactions will use this
 GITHUB_TOKEN: str = os.environ["GITHUB_TOKEN"]
@@ -50,20 +60,26 @@ DISCUSSION_HEADERS: dict[str, str] = {
 STORAGE_TOKEN: str = os.environ["STORAGE_TOKEN"]
 STORAGE_HEADERS: dict[str, str] = {"Authorization": f"Bearer {STORAGE_TOKEN}"}
 
-
+# Repo
 REPO: str = os.environ["GITHUB_REPOSITORY"]
 STORAGE_REPO: str = os.environ.get("STORAGE_REPO", "").strip() or REPO
+
+# Command Actor
 ACTOR: str = os.environ["GITHUB_ACTOR"]
 EVENT: str = os.environ["GITHUB_EVENT_NAME"]
 
+# Discussion
 DISCUSSION_NODE_ID: str = os.environ["DISCUSSION_NODE_ID"]
 DISCUSSION_AUTHOR: str = os.environ["DISCUSSION_AUTHOR"]
-
 DISCUSSION_BODY: str = os.environ.get(
     key="DISCUSSION_BODY", default="").strip()
+DISCUSSION_HTML_URL: str = os.environ.get("DISCUSSION_HTML_URL", "").strip()
+
+# Comment
 COMMENT_BODY: str = os.environ.get(key="COMMENT_BODY", default="").strip()
+COMMENT_HTML_URL: str = os.environ.get("COMMENT_HTML_URL", "").strip()
 
-
+# Paths
 CONFIG_PATH = os.environ.get(
     key="CONFIG_PATH",  default=".github/discussion_moderator/config.yml")
 BANNED_PATH = os.environ.get(
@@ -107,7 +123,8 @@ def read_yaml_file(path: str, firstWriteWillCreate: bool = True) -> tuple[dict[A
     firstWriteWillCreate = True -> sha is None when the file doesn't exist yet (first write will create it).
     """
 
-    print("reading yaml file in path: {}\nWill first write call to file create it: {}", path, firstWriteWillCreate)
+    print("reading yaml file in path: {}\nWill first write call to file create it: {}",
+          path, firstWriteWillCreate)
 
     resp: requests.Response = requests.get(
         url=f"https://api.github.com/repos/{STORAGE_REPO}/contents/{path}",
@@ -130,8 +147,8 @@ def write_yaml_file(path: str, content: dict[str, Any], sha: str | None, commit_
     Returns str: sha.
     """
 
-    print("Writing to yaml file in path: {}\nContent: {}", path, commit_msg, content)
-
+    print("Writing to yaml file in path: {}\nContent: {}",
+          path, commit_msg, content)
 
     body: dict[str, Any] = {
         "message": commit_msg,
@@ -174,7 +191,18 @@ def discussion_closed(node_id: str) -> bool:
     return bool(data["node"]["closed"])
 
 
-# --- for enacting operations on discussion itself --------------------------------
+def complies_format(body: str) -> bool:
+
+    if not FORMAT_ENFORCEMENT_ENABLED:
+        return False
+
+    regex: str = FORMAT_REGEX
+
+    return bool(re.fullmatch(regex, body))
+
+
+# --- GraphQl Helpers --------------------------------
+
 
 def graphql(query: str, variables: dict[str, Any]) -> Any:
     resp = requests.post(
@@ -187,6 +215,8 @@ def graphql(query: str, variables: dict[str, Any]) -> Any:
     if "errors" in result:
         raise RuntimeError(f"GraphQL errors: {result['errors']}")
     return result["data"]
+
+# --- Discussion Operations --------------------------------
 
 
 def close_discussion(node_id: str, reason: str) -> None:
@@ -289,7 +319,7 @@ def get_whole_line_after_command_from_comment_body(id_s: int) -> str:
 
 # ─── Moderation actions ───────────────────────────────────────────────────────
 
-def do_ban(target: str, actor: str, reason: str, banned_users: dict[str, dict[str, str]], banned_users_sha: str | None, strike_counts: dict[str, int], strike_counts_sha: str | None) -> None:
+def do_ban(target: str, actor: str, reason: str, banned_users: dict[str, dict[str, str]], banned_users_sha: str | None, strike_counts: dict[str, int], strike_counts_sha: str | None, action_type: eAction_Type) -> None:
 
     banned_users[target] = {
         "reason":    reason,
@@ -297,28 +327,32 @@ def do_ban(target: str, actor: str, reason: str, banned_users: dict[str, dict[st
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
     write_yaml_file(BANNED_PATH, banned_users,
-                    banned_users_sha, f"ban: {target}")
+                    banned_users_sha, f"ban: {target}\n\nRef: " +
+                    COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL
+                    )
 
-    clear_strikes(target, strike_counts, strike_counts_sha)
+    clear_strikes(target, strike_counts, strike_counts_sha, action_type)
 
     return
 
 
-def do_unban(target: str, banned_users: dict[str, dict[str, str]], banned_users_sha: str | None, strike_counts: dict[str, int], strike_counts_sha: str | None) -> bool:
+def do_unban(target: str, banned_users: dict[str, dict[str, str]], banned_users_sha: str | None, strike_counts: dict[str, int], strike_counts_sha: str | None, action_type: eAction_Type) -> bool:
     if target not in banned_users:
         post_comment(DISCUSSION_NODE_ID,
                      f"@{target} is not in the banned list.")
         return False
     del banned_users[target]
     write_yaml_file(BANNED_PATH, banned_users,
-                    banned_users_sha, f"unban: {target}")
+                    banned_users_sha, f"unban: {target}\n\nRef: " +
+            COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL
+        )
     # Redundancy. Ideally this should have been removed after the user was banned
-    clear_strikes(target, strike_counts, strike_counts_sha)
+    clear_strikes(target, strike_counts, strike_counts_sha, action_type)
 
     return True
 
 
-def do_strike(target: str, strike_counts: dict[str, int], strike_counts_sha: str | None, banned_users: dict[str, dict[str, str]], banned_users_sha: str | None, automatedStrike: bool = False) -> None:
+def do_strike(target: str, strike_counts: dict[str, int], strike_counts_sha: str | None, banned_users: dict[str, dict[str, str]], banned_users_sha: str | None, action_type: eAction_Type) -> None:
     """
     Does strike to target user. Also bans if the user exceeded the STRIKE_TO_BAN threshold
     """
@@ -329,32 +363,34 @@ def do_strike(target: str, strike_counts: dict[str, int], strike_counts_sha: str
     strike_counts[target] = strike_counts.get(target, 0) + 1
     count: int = strike_counts[target]
 
-    strike_counts_sha = write_yaml_file(
-        STRIKES_PATH, strike_counts, strike_counts_sha,
-        f"strike: {target} ({count}/{STRIKE_TO_BAN})"
-    )
-
     post_comment(
         DISCUSSION_NODE_ID,
         body=f"⚠️ Strike **{count}/{STRIKE_TO_BAN}** issued to @{target} by "
-        + (f"@{ACTOR}." if not automatedStrike else "__system__.")
+        + (f"@{ACTOR}." if not (action_type &
+           eAction_Type.AUTOMATED_ACTION) else "__system__.")
     )
 
     assert STRIKE_TO_BAN is not None
     if count >= STRIKE_TO_BAN:
         reason: str = f"Auto-ban: reached {STRIKE_TO_BAN} strikes"
         do_ban(target, "__system__", reason, banned_users,
-               banned_users_sha, strike_counts, strike_counts_sha)
+               banned_users_sha, strike_counts, strike_counts_sha, action_type)
         post_comment(
             DISCUSSION_NODE_ID,
             f"🔨 @{target} has been automatically banned with reason: {reason}."
         )
         close_discussion(DISCUSSION_NODE_ID, "RESOLVED")
+    else:
+        write_yaml_file(
+            STRIKES_PATH, strike_counts, strike_counts_sha,
+            f"strike: {target} ({count}/{STRIKE_TO_BAN})\n\nRef: " +
+            COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL
+        )
 
     return
 
 
-def do_unstrike(target: str, strike_counts: dict[str, int], strike_counts_sha: str | None) -> bool:
+def do_unstrike(target: str, strike_counts: dict[str, int], strike_counts_sha: str | None, action_type: eAction_Type) -> bool:
     """
     Removes one strike from target. Deletes the entry entirely if the
     count would drop to 0 or below. Returns False (no-op) if target has
@@ -373,11 +409,11 @@ def do_unstrike(target: str, strike_counts: dict[str, int], strike_counts_sha: s
         del strike_counts[target]
 
     write_yaml_file(STRIKES_PATH, strike_counts,
-                    strike_counts_sha, f"unstrike: {target}")
+                    strike_counts_sha, f"unstrike: {target}\n\nRef: " + COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL)
     return True
 
 
-def clear_strikes(target: str, strike_counts: dict[str, int], strike_counts_sha: str | None) -> None:
+def clear_strikes(target: str, strike_counts: dict[str, int], strike_counts_sha: str | None, action_type: eAction_Type) -> None:
 
     # no-op call if disabled
     if not STRIKES_ENABLED:
@@ -388,19 +424,9 @@ def clear_strikes(target: str, strike_counts: dict[str, int], strike_counts_sha:
 
     del strike_counts[target]
     write_yaml_file(STRIKES_PATH, strike_counts,
-                    strike_counts_sha, f"clear strikes: {target}")
+                    strike_counts_sha, f"clear strikes: {target}\n\nRef: " + COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL)
 
     return
-
-
-def complies_format(body: str) -> bool:
-
-    if not FORMAT_ENFORCEMENT_ENABLED:
-        return False
-
-    regex: str = FORMAT_REGEX
-
-    return bool(re.fullmatch(regex, body))
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
@@ -452,7 +478,7 @@ def main():
                 )
                 if FORMAT_ENFORCEMENT_STRIKES_ENABLED:
                     do_strike(ACTOR, strike_counts_list, strike_counts_list_sha,
-                              banned_user_list, banned_user_list_sha, True)
+                              banned_user_list, banned_user_list_sha, eAction_Type.DISCUSSION_ACTION | eAction_Type.AUTOMATED_ACTION)
             return
 
     # Comment posted
@@ -551,7 +577,7 @@ def main():
                 return
 
             do_strike(target, strike_counts_list, strike_counts_list_sha,
-                      banned_user_list, banned_user_list_sha)
+                      banned_user_list, banned_user_list_sha, eAction_Type.COMMENT_ACTION)
             return
 
         # /strike-target [@]<username>
@@ -581,7 +607,7 @@ def main():
                 return
 
             do_strike(target, strike_counts_list, strike_counts_list_sha,
-                      banned_user_list, banned_user_list_sha)
+                      banned_user_list, banned_user_list_sha, eAction_Type.COMMENT_ACTION)
             return
 
         # /unstrike-target [@]<username>
@@ -601,7 +627,7 @@ def main():
                              "Usage: `/unstrike-target [@]<username>`")
                 return
 
-            if do_unstrike(target, strike_counts_list, strike_counts_list_sha):
+            if do_unstrike(target, strike_counts_list, strike_counts_list_sha, eAction_Type.COMMENT_ACTION):
                 post_comment(
                     DISCUSSION_NODE_ID,
                     f"✅ One strike removed from @{target} by @{ACTOR}."
@@ -629,11 +655,12 @@ def main():
                 reason_parts) > 1 else None
 
             if reason is None:
-                post_comment(DISCUSSION_NODE_ID, "Usage: `/ban-author <reason>`")
+                post_comment(DISCUSSION_NODE_ID,
+                             "Usage: `/ban-author <reason>`")
                 return
 
             do_ban(target, ACTOR, reason, banned_user_list,
-                   banned_user_list_sha, strike_counts_list, strike_counts_list_sha)
+                   banned_user_list_sha, strike_counts_list, strike_counts_list_sha, eAction_Type.COMMENT_ACTION)
 
             post_comment(
                 DISCUSSION_NODE_ID,
@@ -647,10 +674,12 @@ def main():
             if ACTOR not in moderators:
                 return
 
-            ban_command_body: str = get_whole_line_after_command_from_comment_body(id_s=cmd_start)
+            ban_command_body: str = get_whole_line_after_command_from_comment_body(
+                id_s=cmd_start)
 
             target: str | None = extract_username(ban_command_body)
-            reason_parts: list[str] = ban_command_body.strip().split(maxsplit=2)
+            reason_parts: list[str] = ban_command_body.strip().split(
+                maxsplit=2)
 
             reason: str | None = reason_parts[2] if len(
                 reason_parts) > 2 else None
@@ -668,7 +697,7 @@ def main():
                 return
 
             do_ban(target, ACTOR, reason, banned_user_list,
-                   banned_user_list_sha, strike_counts_list, strike_counts_list_sha)
+                   banned_user_list_sha, strike_counts_list, strike_counts_list_sha, eAction_Type.COMMENT_ACTION)
 
             post_comment(
                 DISCUSSION_NODE_ID,
@@ -688,7 +717,8 @@ def main():
 
             target: str | None = extract_username(close_command_body)
             if target is None:
-                post_comment(DISCUSSION_NODE_ID, "Usage: `/unban-target [@]<username>`")
+                post_comment(DISCUSSION_NODE_ID,
+                             "Usage: `/unban-target [@]<username>`")
                 return
 
             if target not in banned_user_list:
@@ -699,7 +729,7 @@ def main():
                 return
 
             # Only notify is target was actually banned
-            if do_unban(target, banned_user_list, banned_user_list_sha, strike_counts_list, strike_counts_list_sha):
+            if do_unban(target, banned_user_list, banned_user_list_sha, strike_counts_list, strike_counts_list_sha, eAction_Type.COMMENT_ACTION):
                 post_comment(DISCUSSION_NODE_ID,
                              f"✅ @{target} has been unbanned by @{ACTOR}.")
 

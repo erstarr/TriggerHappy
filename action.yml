@@ -63,9 +63,11 @@ runs:
         STORAGE_REPO:          ${{ inputs.storage_repo }}
         DISCUSSION_NODE_ID:    ${{ github.event.discussion.node_id }}
         DISCUSSION_AUTHOR:     ${{ github.event.discussion.user.login }}
-        COMMENT_BODY:          ${{ github.event.comment.body }}
-        DISCUSSION_BODY:       ${{ github.event.discussion.body }}
         DISCUSSION_CATEGORY:   ${{ github.event.discussion.category.name }}
+        DISCUSSION_BODY:       ${{ github.event.discussion.body }}
+        DISCUSSION_HTML_URL: ${{ github.event.discussion.html_url }}
+        COMMENT_BODY:          ${{ github.event.comment.body }}
+        COMMENT_HTML_URL:       ${{ github.event.comment.html_url }}
         CONFIG_PATH:           ${{ inputs.config_path }}
         BANNED_PATH:           ${{ inputs.banned_path }}
         STRIKES_PATH:          ${{ inputs.strikes_path }}
