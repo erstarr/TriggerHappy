@@ -328,7 +328,7 @@ def do_ban(target: str, actor: str, reason: str, banned_users: dict[str, dict[st
     }
     write_yaml_file(BANNED_PATH, banned_users,
                     banned_users_sha, f"ban: {target}\n\nRef: " +
-                    COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL
+                    (COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL)
                     )
 
     clear_strikes(target, strike_counts, strike_counts_sha, action_type)
@@ -344,7 +344,7 @@ def do_unban(target: str, banned_users: dict[str, dict[str, str]], banned_users_
     del banned_users[target]
     write_yaml_file(BANNED_PATH, banned_users,
                     banned_users_sha, f"unban: {target}\n\nRef: " +
-            COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL
+            (COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL)
         )
     # Redundancy. Ideally this should have been removed after the user was banned
     clear_strikes(target, strike_counts, strike_counts_sha, action_type)
@@ -384,7 +384,7 @@ def do_strike(target: str, strike_counts: dict[str, int], strike_counts_sha: str
         write_yaml_file(
             STRIKES_PATH, strike_counts, strike_counts_sha,
             f"strike: {target} ({count}/{STRIKE_TO_BAN})\n\nRef: " +
-            COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL
+            (COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL)
         )
 
     return
@@ -409,7 +409,7 @@ def do_unstrike(target: str, strike_counts: dict[str, int], strike_counts_sha: s
         del strike_counts[target]
 
     write_yaml_file(STRIKES_PATH, strike_counts,
-                    strike_counts_sha, f"unstrike: {target}\n\nRef: " + COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL)
+                    strike_counts_sha, f"unstrike: {target}\n\nRef: " + (COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL))
     return True
 
 
@@ -424,7 +424,7 @@ def clear_strikes(target: str, strike_counts: dict[str, int], strike_counts_sha:
 
     del strike_counts[target]
     write_yaml_file(STRIKES_PATH, strike_counts,
-                    strike_counts_sha, f"clear strikes: {target}\n\nRef: " + COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL)
+                    strike_counts_sha, f"clear strikes: {target}\n\nRef: " + (COMMENT_HTML_URL if action_type & eAction_Type.COMMENT_ACTION else DISCUSSION_HTML_URL))
 
     return
 
