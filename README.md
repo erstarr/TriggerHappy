@@ -71,7 +71,7 @@ Follow the instructions there to enable optional features.
 
 You need to set up "Fine-grained PAT" for the consumer repo to be able to act on the storage repo. Use `CROSS_REPO_TOKEN` to store the storage repo token.
 
-See sampleConsumerRepoStructure/.github/workflows/discussion_moderation.yml for setting up Consumer Repo(s)
+See [Example Workflow](sampleConsumerRepoStructure/.github/workflows/discussion_moderation.yml) for setting up Consumer Repo(s)
 
 The paths paths across all consumer repos MUST BE SYNCED!
 
