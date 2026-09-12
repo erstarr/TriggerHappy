@@ -73,7 +73,7 @@ You need to set up "Fine-grained PAT" for the consumer repo to be able to act on
 
 See [Example Workflow](sampleConsumerRepoStructure/.github/workflows/discussion_moderation.yml) for setting up Consumer Repo(s)
 
-The paths paths across all consumer repos MUST BE SYNCED!
+The paths paths across all consumer repos may be syced if you wanna uset the same config/strike/ban files across projects.
 
 # To-Do
 
