@@ -69,7 +69,7 @@ Follow the instructions there to enable optional features.
 
 ### Multiple Repos
 
-You need to set up "Fine-grained PAT" for the consumer repo to be able to act on the storage repo. Use `CROSS_REPO_TOKEN` to store the storage repo token.
+You need to set up "Fine-grained PAT" for the consumer repo to be able to act on the storage repo. Use `CROSS_REPO_TOKEN` to store the storage repo token. It must include the consumer and storage repo, and `Contents: Read and write` permissions.
 
 See [Example Workflow](sampleConsumerRepoStructure/.github/workflows/discussion_moderation.yml) for setting up Consumer Repo(s)
 
