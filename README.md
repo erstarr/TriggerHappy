@@ -79,4 +79,4 @@ The paths paths across all consumer repos may be syced if you wanna uset the sam
 
 - [ ] Multiple Messages Per Comment
 - [ ] Per-Strike Reasons
-
+- [ ] Custom comment text for ban/unban/strike/un-strike/close/open/format-enforcement actions
