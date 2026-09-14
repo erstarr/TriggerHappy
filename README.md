@@ -77,6 +77,6 @@ The paths paths across all consumer repos may be syced if you wanna uset the sam
 
 # To-Do
 
-- [] Multiple Messages Per Comment
-- [] Per-Strike Reasons
+- [ ] Multiple Messages Per Comment
+- [ ] Per-Strike Reasons
 
