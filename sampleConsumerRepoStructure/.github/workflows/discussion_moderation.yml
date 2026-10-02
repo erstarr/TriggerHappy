@@ -23,8 +23,9 @@ jobs:
           config_path:  .github/discussion_moderator/config.yml
           banned_path:  .github/discussion_moderator/banned.yml
           strikes_path: .github/discussion_moderator/strikes.yml
+          # optional feature - enables strikes.
           strikes_to_ban:  3
-          # optional feature - If you want to enable auto format-enforcement, provide a regex to match against
+          # optional feature - format enforcement
           auto_close_regex: ".*"
           auto_close_categories: "General, Bugs, Feature Requests"
           # optional feature - Shall discussion authors that didn't obey the format receive strikes for it -- uses the strikes_to_ban quota like normal strikes
