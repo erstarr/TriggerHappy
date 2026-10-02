@@ -80,5 +80,5 @@ The paths paths across all consumer repos may be syced if you wanna uset the sam
 - [ ] Multiple Messages Per Comment
 - [ ] Per-Strike Reasons
 - [ ] Custom comment text for ban/unban/strike/un-strike/close/open/format-enforcement actions
-- [ ] Close message - include used github reason. Closed by <closer> GHReason [closerOptionalReason]
+- [ ] Close message - include used github reason. `Closed by <closer> GHReason [closerOptionalReason]`
 - [ ] If github permits, auto mark close/ban/format enforcement command comment as answer
